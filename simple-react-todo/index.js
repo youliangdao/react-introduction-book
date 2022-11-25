@@ -47,54 +47,76 @@ class TodoListModel {
   getTodo(id) {
     return this.todos.get(id);
   }
-}
 
+  /**
+   * todosを全件取得
+   * @returns TODOs
+   */
+  getTodos() {
+    return Array.from(this.todos.values());
+  }
+}
 const todoList = new TodoListModel();
 
 class View {
+  // /**
+  //  * TODOをUIに追加する
+  //  * @param {id: number, task: string, isCheck: boolean} todo
+  //  */
+  // addTodo(todo) {
+  //   const todosEl = document.getElementById("todos");
+  //   const todoEl = this._createTodoElement(todo);
+  //   todosEl.appendChild(todoEl);
+  // }
+
+  // /**
+  //  * todoをチェックに応じてスタイルを変える
+  //  * @param {*} id TODOのid
+  //  */
+  // check(id) {
+  //   const todoEl = document.getElementById(`todo-${id}`);
+  //   todoEl.className = `checked`;
+  // }
+
+  // /**
+  //  * todoをチェックに応じてスタイルを変える
+  //  * @param {*} id TODOのid
+  //  */
+  // unCheck(id) {
+  //   const todoEl = document.getElementById(`todo-${id}`);
+  //   todoEl.className = "";
+  // }
+
+  // /**
+  //  * input form をリセットする
+  //  */
+  // resetTodo() {
+  //   const input = document.getElementById("task-input");
+  //   input.value = ""; // input のリセット
+  // }
+
+  // /**
+  //  * 指定したTODOをDOMから削除する
+  //  * @param {*} id TODOのid
+  //  */
+  // removeTodo(id) {
+  //   const todoEl = document.getElementById(`todo-${id}`);
+  //   todoEl.remove();
+  // }
+
   /**
-   * TODOをUIに追加する
-   * @param {id: number, task: string, isCheck: boolean} todo
+   * TODOの配列からUIを生成する関数
+   * @param {Todo[]} todos
    */
-  addTodo(todo) {
+  render(todos) {
     const todosEl = document.getElementById("todos");
-    const todoEl = this._createTodoElement(todo);
-    todosEl.appendChild(todoEl);
-  }
-
-  /**
-   * todoをチェックに応じてスタイルを変える
-   * @param {*} id TODOのid
-   */
-  check(id) {
-    const todoEl = document.getElementById(`todo-${id}`);
-    todoEl.className = `checked`;
-  }
-
-  /**
-   * todoをチェックに応じてスタイルを変える
-   * @param {*} id TODOのid
-   */
-  unCheck(id) {
-    const todoEl = document.getElementById(`todo-${id}`);
-    todoEl.className = "";
-  }
-
-  /**
-   * input form をリセットする
-   */
-  resetTodo() {
-    const input = document.getElementById("task-input");
-    input.value = ""; // input のリセット
-  }
-
-  /**
-   * 指定したTODOをDOMから削除する
-   * @param {*} id TODOのid
-   */
-  removeTodo(id) {
-    const todoEl = document.getElementById(`todo-${id}`);
-    todoEl.remove();
+    todosEl.innerHTML = "";
+    const fragment = document.createDocumentFragment();
+    todos.forEach((todo) => {
+      const todoEl = this._createTodoElement(todo);
+      fragment.appendChild(todoEl);
+    });
+    todosEl.appendChild(fragment);
   }
 
   /**
@@ -132,6 +154,18 @@ class Controller {
     this.handleSubmitForm();
   }
 
+  flash() {
+    const todos = todoList.getTodos();
+    view.render(todos);
+
+    // イベントハンドラの受け渡し
+    todos.forEach((todo) => {
+      const id = todo.id;
+      this.handleCheckTask(id);
+      this.handleClickDeleteTask(id);
+    });
+  }
+
   /**
    * タスク送信時にTODO追加とUI反映をする
    */
@@ -146,12 +180,8 @@ class Controller {
         alert("テキストを入力してください。");
         return;
       }
-      const addedTodoId = todoList.addTodo(task);
-      const todo = todoList.getTodo(addedTodoId);
-      view.addTodo(todo);
-      this.handleCheckTask(todo.id);
-      this.handleClickDeleteTask(todo.id);
-      view.resetTodo();
+      const addedId = todoList.addTodo(task);
+      this.flash();
     });
   }
 
@@ -161,15 +191,11 @@ class Controller {
    */
   handleCheckTask(id) {
     const checkBoxEl = document.getElementById(`checkbox-${id}`);
-    checkBoxEl.onchange = function (e) {
+    checkBoxEl.addEventListener("change", (e) => {
       const checked = e.target.checked;
-      const stateChangedTodo = todoList.checkTodo(id, checked);
-      if (stateChangedTodo.checked) {
-        view.check(stateChangedTodo.id);
-      } else {
-        view.unCheck(stateChangedTodo.id);
-      }
-    };
+      todoList.checkTodo(id, checked);
+      this.flash();
+    });
   }
 
   /**
@@ -178,10 +204,10 @@ class Controller {
    */
   handleClickDeleteTask(id) {
     const buttonEl = document.getElementById(`button-${id}`);
-    buttonEl.onclick = function () {
-      view.removeTodo(id);
+    buttonEl.addEventListener("click", () => {
       todoList.removeTodo(id);
-    };
+      this.flash();
+    });
   }
 }
 
