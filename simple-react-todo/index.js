@@ -117,6 +117,8 @@ class View {
       fragment.appendChild(todoEl);
     });
     todosEl.appendChild(fragment);
+    const input = document.getElementById("task-input");
+    input.value = ""; // input のリセット
   }
 
   /**
